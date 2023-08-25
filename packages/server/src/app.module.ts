@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { UserModule } from './module/user/user.module';
+import { AuthModule } from './module/auth/auth.module';
 
 import { config } from './config';
 
@@ -19,6 +21,7 @@ const userEntity = config.dbEntity.User;
       synchronize: true,
     }),
     UserModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

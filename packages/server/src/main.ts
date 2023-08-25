@@ -1,6 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { config } from './config';
+import { HttpExceptionFilter } from './filter/http-exception.filter';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   /*
@@ -28,15 +30,17 @@ async function bootstrap() {
   | Set global filters and pipes
   |--------------------------------------------------------------------------
   */
-  //   app.useGlobalFilters(new BadRequestExceptionFilter());
-  //   app.useGlobalPipes(
-  //     new ValidationPipe({
-  //       transform: true,
-  //       whitelist: true,
-  //       forbidNonWhitelisted: true,
-  //       exceptionFactory: (errors) => new BadRequestException(errors),
-  //     }),
-  //   );
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalPipes(new ValidationPipe());
+  // app.useGlobalFilters(new BadRequestExceptionFilter());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      exceptionFactory: (errors) => new BadRequestException(errors),
+    }),
+  );
 
   /*
     |--------------------------------------------------------------------------

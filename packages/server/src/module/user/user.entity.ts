@@ -5,6 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
+import { IsEmail, MinLength } from 'class-validator';
 
 @Entity()
 export class User {
@@ -12,12 +14,18 @@ export class User {
   id: string;
 
   @Column({ length: 100 })
+  @MinLength(3, {
+    message: 'firstName must be at least 3 characters',
+  })
   firstName: string;
 
   @Column({ length: 100 })
+  @MinLength(3, {
+    message: 'lastName must be at least 3 characters',
+  })
   lastName: string;
 
-  //   @Exclude()
+  @Exclude()
   @Column({ length: 500 })
   password: string;
 
@@ -25,6 +33,10 @@ export class User {
   avatar: string; // avatar
 
   @Column({ length: 500, nullable: null })
+  @IsEmail()
+  @MinLength(5, {
+    message: 'email must be at least 5 characters',
+  })
   email: string; // email
 
   @Column('simple-enum', { enum: ['admin', 'visitor'], default: 'visitor' })

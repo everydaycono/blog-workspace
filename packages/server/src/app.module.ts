@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from './module/user/user.module';
+
+import { config } from './config';
+
+const userEntity = config.dbEntity.User;
 
 @Module({
   imports: [
@@ -10,9 +15,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       username: 'root',
       password: 'root',
       database: 'conoblog',
-      entities: [],
+      entities: [userEntity],
       synchronize: true,
     }),
+    UserModule,
   ],
 })
 export class AppModule {}

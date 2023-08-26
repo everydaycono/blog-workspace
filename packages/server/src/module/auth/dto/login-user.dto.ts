@@ -1,19 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, MinLength } from 'class-validator';
 
-export class CreateUserDto {
-  @ApiProperty()
-  @MinLength(3, {
-    message: 'firstName must be at least 3 characters',
-  })
-  firstName: string;
-
-  @ApiProperty()
-  @MinLength(3, {
-    message: 'lastName must be at least 3 characters',
-  })
-  lastName: string;
-
+export class LoginUserDto {
   @ApiProperty()
   @IsEmail()
   @MinLength(5, {
@@ -27,3 +15,4 @@ export class CreateUserDto {
   })
   password: string;
 }
+

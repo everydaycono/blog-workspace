@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { config } from './config';
 import { HttpExceptionFilter } from './filter/http-exception.filter';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   /*
@@ -31,7 +32,7 @@ async function bootstrap() {
   |--------------------------------------------------------------------------
   */
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalPipes(new ValidationPipe());
+  // app.useGlobalPipes(new ValidationPipe());
   // app.useGlobalFilters(new BadRequestExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
@@ -47,9 +48,15 @@ async function bootstrap() {
     | Initialize Swagger and APP
     |--------------------------------------------------------------------------
     */
-  //   if (process.env.NODE_ENV !== 'production') {
-  //     await bootstrapSwagger(app, config.app);
-  //   }
+  if (process.env.NODE_ENV !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Wipi Open Api')
+      .setDescription('Wipi Open Api Document')
+      .setVersion('1.0')
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api-docs', app, document);
+  }
   await app.listen(config.app.port);
 }
 bootstrap();

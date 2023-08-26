@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
 import { Repository } from 'typeorm';
 import { passwordHash } from 'src/utils/user.utils';
+import { LoginUserDto } from './dto/login-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -39,5 +40,9 @@ export class AuthService {
     const newUser = await this.userRepository.create(user);
     await this.userRepository.save(newUser);
     return newUser;
+  }
+
+  async login(user: LoginUserDto) {
+    return `sadfa`;
   }
 }

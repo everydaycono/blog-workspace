@@ -19,6 +19,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
+    const isDebug = request.query?.debug;
+
     const message = exception.message || 'Unexpected error happend'; // error message
     response.status(status).json({
       statusCode: status,

@@ -4,14 +4,16 @@ import { UpdateAuthDto } from './dto/update-auth.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
 import { Repository } from 'typeorm';
-import { passwordHash } from 'src/utils/user.utils';
+import { passwordCompare, passwordHash } from 'src/utils/user.utils';
 import { LoginUserDto } from './dto/login-user.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private jwtService: JwtService,
   ) {}
 
   async register(user: Partial<User>) {
@@ -43,6 +45,65 @@ export class AuthService {
   }
 
   async login(user: LoginUserDto) {
-    return `sadfa`;
+    // Find exist user with email
+    const isExistUser = await this.userRepository.findOne({
+      where: { email: user.email },
+    });
+
+    if (!isExistUser) {
+      throw new HttpException(
+        'Incorrect user name or password',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Check password
+    const isPasswordCorrect = passwordCompare({
+      plainPassword: isExistUser.password,
+      hashedPassword: user.password,
+    });
+    if (!isPasswordCorrect) {
+      throw new HttpException(
+        'Incorrect user name or password',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // User status check ("locekd",'active')
+    if (isExistUser.status === 'locked') {
+      throw new HttpException('Your account is locked', HttpStatus.FORBIDDEN);
+    }
+
+    delete isExistUser.password;
+    delete isExistUser.createAt;
+    delete isExistUser.updateAt;
+
+    // Create JWT TOKEN
+
+    const token = this.createToken(isExistUser);
+    return Object.assign(isExistUser, { token });
+  }
+
+  createToken(
+    user: Pick<
+      User,
+      'email' | 'firstName' | 'lastName' | 'avatar' | 'role' | 'status' | 'id'
+    >,
+  ) {
+    return this.jwtService.sign(
+      {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatar: user.avatar,
+        role: user.role,
+        status: user.status,
+        id: user.id,
+      },
+      {
+        secret: process.env.JWT_SECRET,
+        expiresIn: '15m',
+      },
+    );
   }
 }

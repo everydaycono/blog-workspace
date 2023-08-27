@@ -22,11 +22,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const isDebug = request.query?.debug;
 
     const message = exception.message || 'Unexpected error happend'; // error message
+    const error = exception.getResponse()['error'];
+
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
       message,
+      error,
     });
   }
 }

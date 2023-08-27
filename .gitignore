@@ -13,3 +13,6 @@ test-results
 *.cache
 *error.log
 *debug.log
+
+.env
+.env.local

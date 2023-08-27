@@ -48,6 +48,10 @@ export class User {
   @Column({ default: 'normal' })
   type: string; // 用户类型
 
+  @Exclude()
+  @Column({ length: 500, default: null })
+  refreshToken: string; // 用户类型
+
   @CreateDateColumn({
     type: 'datetime',
     comment: 'Creation time',

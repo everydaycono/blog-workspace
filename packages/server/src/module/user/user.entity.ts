@@ -52,6 +52,15 @@ export class User {
   @Column({ length: 500, default: null })
   refreshToken: string; // 用户类型
 
+  @Column({ type: 'boolean', default: false })
+  isEmailVerified: boolean;
+
+  @Column({ nullable: true })
+  emailVerificationToken: string;
+
+  @Column({ nullable: true })
+  emailVerificationExpiry: Date;
+
   @CreateDateColumn({
     type: 'datetime',
     comment: 'Creation time',

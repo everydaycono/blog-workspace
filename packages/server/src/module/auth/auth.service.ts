@@ -4,16 +4,21 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../user/user.entity';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { passwordCompare, passwordHash } from 'src/utils/user.utils';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
-import { accessTkExpiresIn, refreshTkExpiresIn } from 'src/utils/auth.utils';
+import {
+  accessTkExpiresIn,
+  createRandomToken,
+  emailVerificationExpiry,
+  refreshTkExpiresIn,
+  updateRandomToken,
+} from 'src/utils/auth.utils';
 import { IuserInfo } from './auth.controller';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +26,7 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async register(user: Partial<User>) {
@@ -46,8 +52,23 @@ export class AuthService {
     // Encrypt password
     user.password = passwordHash(password);
 
-    const newUser = await this.userRepository.create(user);
+    const unHashedToken = createRandomToken;
+    const hashedToken = updateRandomToken(unHashedToken);
+
+    // Send verify cation email
+    await this.mailService.sendUserConfirmation(user, unHashedToken);
+
+    const newUserInfo = Object.assign(user, {
+      emailVerificationToken: hashedToken,
+      emailVerificationExpiry: new Date(Date.now() + emailVerificationExpiry),
+    });
+    const newUser = await this.userRepository.create(newUserInfo);
     await this.userRepository.save(newUser);
+
+    delete newUser.emailVerificationExpiry;
+    delete newUser.emailVerificationToken;
+    delete newUser.isEmailVerified;
+
     return newUser;
   }
 
@@ -64,6 +85,13 @@ export class AuthService {
       );
     }
 
+    // email verification check
+    if (!isExistUser.isEmailVerified) {
+      throw new HttpException(
+        'Please verify your email',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     // Check password
     const isPasswordCorrect = passwordCompare({
       plainPassword: isExistUser.password,
@@ -131,6 +159,34 @@ export class AuthService {
         access: accessToken,
         refresh: refreshToken,
       },
+    };
+  }
+
+  async verifyEmail(verifyToken: string) {
+    // find user by verifyToken and emailVerificationExpiry
+
+    const hashToken = updateRandomToken(verifyToken);
+    const user = await this.userRepository.findOne({
+      where: {
+        emailVerificationToken: hashToken,
+        emailVerificationExpiry: MoreThan(new Date()),
+      },
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    // If we found the user that means the token is valid
+    // Now we can remove the associated email token and expiry date as we no  longer need them
+    user.emailVerificationToken = null;
+    user.emailVerificationExpiry = null;
+    user.isEmailVerified = true;
+    await this.userRepository.update(user.id, user);
+
+    return {
+      isEmailVerified: true,
+      message: 'Email is verified',
     };
   }
 

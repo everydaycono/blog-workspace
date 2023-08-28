@@ -6,6 +6,7 @@ import { AuthModule } from './module/auth/auth.module';
 
 import { config } from './config';
 import { ConfigModule } from '@nestjs/config';
+import { MailModule } from './module/mail/mail.module';
 
 const userEntity = config.dbEntity.User;
 
@@ -26,6 +27,7 @@ const userEntity = config.dbEntity.User;
     }),
     UserModule,
     AuthModule,
+    MailModule,
   ],
 })
 export class AppModule {}

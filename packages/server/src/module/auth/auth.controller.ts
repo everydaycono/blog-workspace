@@ -8,6 +8,9 @@ import {
   HttpStatus,
   UseGuards,
   Request,
+  Get,
+  Query,
+  HttpException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { User } from '../user/user.entity';
@@ -63,7 +66,17 @@ export class AuthController {
   @UseGuards(RefreshGuard)
   @Post('refresh-token')
   refreshToken(@Request() req: RequestWithUser) {
-    console.log(req.userInfo);
     return this.authService.refreshToken(req.userInfo);
+  }
+
+  @Get('verify-email')
+  verifyEmail(@Query('token') verifyToken: string) {
+    if (!verifyToken) {
+      throw new HttpException(
+        'Verify token is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return this.authService.verifyEmail(verifyToken);
   }
 }

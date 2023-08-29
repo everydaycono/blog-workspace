@@ -9,7 +9,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), JwtModule, MailModule],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    JwtModule.register({ global: true }),
+    MailModule,
+  ],
   controllers: [AuthController],
   providers: [AuthService],
 })

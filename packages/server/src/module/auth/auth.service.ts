@@ -19,6 +19,13 @@ import {
 } from 'src/utils/auth.utils';
 import { IuserInfo } from './auth.controller';
 import { MailService } from '../mail/mail.service';
+import { RedirectException } from 'src/filter/redirect.exception';
+
+interface socialLoginType {
+  id: string;
+  userName: string;
+  avatar: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -188,6 +195,58 @@ export class AuthService {
       isEmailVerified: true,
       message: 'Email is verified',
     };
+  }
+
+  async socialLogin(user: socialLoginType, type: 'github' | 'google') {
+    // user exist check
+    const isExistUser = await this.userRepository.findOne({
+      where: { email: user.userName, type },
+    });
+
+    // Client 는 회원가입 창으로 넘김.
+    if (!isExistUser) {
+      // throw new NotFoundException('User not found, redirect to register page');
+      throw new RedirectException({
+        userInfo: { ...user, type },
+      });
+    }
+
+    // user 가 있다면 login
+
+    // 체크리스트
+    // [x] 이메일 verified (소셜로그인은 verified)
+    // [x] password check (소셜로그인은 password 없음)
+    // [✅] user status (locked,active 체크)
+    if (isExistUser.status === 'locked') {
+      throw new HttpException('Your account is locked', HttpStatus.FORBIDDEN);
+      // throw new HttpException('Your account is locked', HttpStatus.FORBIDDEN);
+    }
+
+    // Create JWT TOKEN
+    const ACCESSTK = this.generateAccessToken(isExistUser);
+    const REFRESHTK = this.generateRefereshToken(isExistUser);
+
+    // Save refresh token in db
+    this.userRepository.update(
+      { id: isExistUser.id },
+      { refreshToken: REFRESHTK },
+    );
+
+    const userInfo = {
+      email: isExistUser.email,
+      firstName: isExistUser.firstName,
+      lastName: isExistUser.lastName,
+      avatar: isExistUser.avatar,
+      role: isExistUser.role,
+      id: isExistUser.id,
+    };
+
+    return Object.assign(userInfo, {
+      token: {
+        access: ACCESSTK,
+        refresh: REFRESHTK,
+      },
+    });
   }
 
   generateAccessToken(

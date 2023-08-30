@@ -11,6 +11,7 @@ import {
   Get,
   Query,
   HttpException,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { User } from '../user/user.entity';
@@ -19,6 +20,7 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LoginUserDto } from './dto/login-user.dto';
 import { RefreshGuard } from './guard/refresh-jwt.guard';
 import { Request as ExpRequest } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 
 export interface IuserInfo {
   token: string;
@@ -78,5 +80,37 @@ export class AuthController {
       );
     }
     return this.authService.verifyEmail(verifyToken);
+  }
+
+  @Get('social-login')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('github'))
+  async socialLogin() {
+    return 'redirecting to github...';
+  }
+
+  @Get('github-callback')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('github'))
+  async githubCallback(@Req() req) {
+    const { user } = req as {
+      user: {
+        id: string;
+        username: string;
+        photos: {
+          value: string;
+        }[];
+        _json: {
+          id: number;
+        };
+      };
+    };
+
+    const newUser = {
+      id: user.id || user._json.id.toString(),
+      userName: user.username,
+      avatar: user.photos[0].value,
+    };
+    return this.authService.socialLogin(newUser, 'github');
   }
 }

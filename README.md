@@ -14,11 +14,11 @@ yarn workspace
 - [x] login
 - [x] refresh
 - [x] (verify-email) email verify
+- [x] social login (github)
 - [ ] update
 - [ ] (current-user) current user
 - [ ] (change-password) password change
 - [ ] (forgot-passworod)
 - [ ] password
-- [ ] social login
 
 #### 2. Article
